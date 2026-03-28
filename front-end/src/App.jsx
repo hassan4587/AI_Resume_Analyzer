@@ -9,7 +9,8 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("BUTTON CLICKED");
-
+    console.log("ENV:", import.meta.env);
+    console.log("API:", import.meta.env.VITE_API_BASE_URL);
     if (!file) {
       alert("Please select a resume first");
       return;
