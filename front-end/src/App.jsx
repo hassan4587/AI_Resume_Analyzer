@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 function App() {
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
@@ -21,7 +22,7 @@ function App() {
     formData.append("resume", file);
 
     try {
-      const res = await fetch("http://localhost:5000/api/analyze", {
+      const res = await fetch(`${API_URL}/api/analyze`, {
         method: "POST",
         body: formData,
       });
