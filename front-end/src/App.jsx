@@ -1,7 +1,7 @@
-import ResumeAnalyzer from "./components/ResumeAnalyzer";
+import ResumeAnalyzerApp from "./components/ResumeAnalyzer";
 
 function App() {
-  return <ResumeAnalyzer />;
+  return <ResumeAnalyzerApp />;
 }
 
 export default App;
