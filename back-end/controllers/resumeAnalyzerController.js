@@ -1,12 +1,8 @@
-import express from "express";
-import multer from "multer";
 import parseResume from "../utils/parseResume.cjs";
 import analyzeResume from "../services/aiService.js";
+import generateResumeHTML from "../services/resumeGenerator.js";
 
-const router = express.Router();
-const upload = multer();
-
-router.post("/analyze", upload.single("resume"), async (req, res) => {
+const resumeAnalyzerController = async (req, res) => {
   try {
     console.log("request received");
 
@@ -19,12 +15,12 @@ router.post("/analyze", upload.single("resume"), async (req, res) => {
 
     // 2. AI Analysis
     const analysis = await analyzeResume(resumeText);
-
-    res.json(analysis);
+    const generatedResumeHtml = generateResumeHTML();
+    res.json({ analysis, resume: generatedResumeHtml });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
-});
+};
 
-export default router;
+export default resumeAnalyzerController;

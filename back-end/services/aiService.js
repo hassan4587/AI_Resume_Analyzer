@@ -17,28 +17,67 @@ export default async function analyzeResume(resumeText) {
     messages: [
       {
         role: "system",
-        content: "You are a professional resume reviewer.",
+        content: "You are a professional resume reviewer and resume writer.",
       },
       {
         role: "user",
         content: `
-Analyze this resume and return ONLY valid JSON in this format:
+Analyze the following resume AND generate an improved, ATS-friendly version.
+
+Return ONLY valid JSON in this format:
 
 {
   "score": number,
   "feedback": string,
   "strengths": string[],
-  "weaknesses": string[]
+  "weaknesses": string[],
+  "improved_resume": {
+    "name": string,
+    "title": string,
+    "summary": string,
+    "skills": string[],
+    "experience": [
+      {
+        "role": string,
+        "company": string,
+        "duration": string,
+        "bullets": string[]
+      }
+    ],
+    "projects": [
+      {
+        "name": string,
+        "description": string,
+        "bullets": string[]
+      }
+    ],
+    "education": [
+      {
+        "degree": string,
+        "institution": string,
+        "year": string
+      }
+    ]
+  }
 }
+
+Instructions:
+- Keep strengths from the original resume
+- Fix all weaknesses
+- Improve clarity, formatting, and wording
+- Add quantifiable achievements where possible (e.g., %, numbers)
+- Make it ATS-friendly
+- Do NOT hallucinate unrealistic experience
+- If some data is missing, infer reasonably but keep it generic
+- Keep output clean and professional
 
 Resume:
 ${resumeText}
-        `,
+    `,
       },
     ],
     temperature: 0.3,
   });
-
   const text = response.choices[0].message.content;
 
   // Try parsing JSON safely
