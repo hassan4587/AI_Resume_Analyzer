@@ -56,7 +56,7 @@ export default function ResumeAnalyzerApp() {
   const [resumeFile, setResumeFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
-  const [generatedResumeHtml, setGeneratedResumeHtml] = useState("");
+  const [generatedResumeHtml, setGeneratedResumeHtml] = useState(null);
   const [view, setView] = useState("landing");
 
   // ----------------------------------------------------------
@@ -85,6 +85,8 @@ export default function ResumeAnalyzerApp() {
       });
 
       const data = await res.json();
+      console.log(data.improved_resume);
+
       setAnalysis(data.analysis || data);
       setGeneratedResumeHtml(data.improved_resume || "");
       setView("dashboard");
