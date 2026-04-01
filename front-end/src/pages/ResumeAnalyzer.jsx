@@ -86,7 +86,7 @@ export default function ResumeAnalyzerApp() {
 
       const data = await res.json();
       setAnalysis(data.analysis || data);
-      setGeneratedResumeHtml(data.resume || "");
+      setGeneratedResumeHtml(data.improved_resume || "");
       setView("dashboard");
     } catch (err) {
       console.error(err);
