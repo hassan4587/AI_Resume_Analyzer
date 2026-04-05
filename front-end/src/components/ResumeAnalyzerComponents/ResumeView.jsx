@@ -1,6 +1,5 @@
-import React, { useRef } from "react";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+import React, { useRef, useState } from "react";
+import { API_URL } from "../../config/api";
 function ResumeView({ generatedResumeData: data, setView }) {
   // ----------------------------------------------------------
   // REF: resumeRef
@@ -10,7 +9,7 @@ function ResumeView({ generatedResumeData: data, setView }) {
   // generator has no element to rasterize.
   // ----------------------------------------------------------
   const resumeRef = useRef(null);
-
+  const [downloading, setDownloading] = useState(false);
   // ----------------------------------------------------------
   // HANDLER: downloadResumePDF
   // Converts the rendered resume DOM node into a downloadable
@@ -24,42 +23,77 @@ function ResumeView({ generatedResumeData: data, setView }) {
   //  5. Triggers a browser download as "resume.pdf".
   // ----------------------------------------------------------
 
-  const downloadResumePDF = async () => {
-    if (!resumeRef.current) {
-      return;
-    }
+  // const downloadResumePDF = async () => {
+  //   if (!resumeRef.current) {
+  //     return;
+  //   }
+
+  //   try {
+  //     const element = resumeRef.current;
+  //     const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+  //     const imgData = canvas.toDataURL("image/png");
+
+  //     const pdf = new jsPDF("p", "pt", "a4");
+  //     const pageWidth = pdf.internal.pageSize.getWidth();
+  //     const pageHeight = pdf.internal.pageSize.getHeight();
+
+  //     const imgProps = pdf.getImageProperties(imgData);
+  //     const pdfWidth = pageWidth;
+  //     const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+
+  //     let heightLeft = pdfHeight;
+  //     let position = 0;
+
+  //     pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+  //     heightLeft -= pageHeight;
+
+  //     // Pagination loop — adds a new page for every overflow chunk
+  //     while (heightLeft > 0) {
+  //       position = heightLeft - pdfHeight;
+  //       pdf.addPage();
+  //       pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+  //       heightLeft -= pageHeight;
+  //     }
+
+  //     pdf.save("resume.pdf");
+  //   } catch (error) {
+  //     console.error("Download PDF failed", error);
+  //     alert("Failed to generate PDF. Please try again.");
+  //   }
+  // };
+
+  const downloadPDF = async () => {
+    if (downloading) return;
 
     try {
-      const element = resumeRef.current;
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL("image/png");
+      setDownloading(true);
 
-      const pdf = new jsPDF("p", "pt", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      const res = await fetch(`${API_URL}/api/generate-pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ resumeData: data }), // ✅ FIXED
+      });
 
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pageWidth;
-      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-
-      let heightLeft = pdfHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-
-      // Pagination loop — adds a new page for every overflow chunk
-      while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+      if (!res.ok) {
+        throw new Error("Failed to generate PDF");
       }
 
-      pdf.save("resume.pdf");
-    } catch (error) {
-      console.error("Download PDF failed", error);
-      alert("Failed to generate PDF. Please try again.");
+      const blob = await res.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "resume.pdf";
+      a.click();
+
+      window.URL.revokeObjectURL(url); //cleanup
+    } catch (err) {
+      console.error(err);
+      alert("PDF generation failed");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -75,7 +109,7 @@ function ResumeView({ generatedResumeData: data, setView }) {
         </button>
 
         <button
-          onClick={downloadResumePDF}
+          onClick={downloadPDF}
           className="bg-black text-white px-4 py-2 rounded-md"
         >
           Download
