@@ -1,11 +1,68 @@
-import React from "react";
+import React, { useRef } from "react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+function ResumeView({ generatedResumeData: data, setView }) {
+  // ----------------------------------------------------------
+  // REF: resumeRef
+  // Attached to the rendered HTML resume container so that
+  // html2canvas can target the exact DOM node when the user
+  // clicks "Download PDF". Without this ref, the PDF
+  // generator has no element to rasterize.
+  // ----------------------------------------------------------
+  const resumeRef = useRef(null);
 
-function ResumeView({
-  generatedResumeHtml: data,
-  setView,
-  resumeRef,
-  downloadResumePDF,
-}) {
+  // ----------------------------------------------------------
+  // HANDLER: downloadResumePDF
+  // Converts the rendered resume DOM node into a downloadable
+  // multi-page PDF. Steps:
+  //  1. Guards against a missing ref (resume not yet rendered).
+  //  2. Uses html2canvas to rasterize the resume div at 2×
+  //     scale for retina-quality output.
+  //  3. Uses jsPDF to create an A4 document.
+  //  4. Tiles the canvas image across multiple pages if the
+  //     resume is taller than one A4 page.
+  //  5. Triggers a browser download as "resume.pdf".
+  // ----------------------------------------------------------
+
+  const downloadResumePDF = async () => {
+    if (!resumeRef.current) {
+      return;
+    }
+
+    try {
+      const element = resumeRef.current;
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "pt", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pageWidth;
+      const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      // Pagination loop — adds a new page for every overflow chunk
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save("resume.pdf");
+    } catch (error) {
+      console.error("Download PDF failed", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       {/* Top Bar */}

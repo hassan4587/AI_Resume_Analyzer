@@ -1,6 +1,61 @@
-import React from "react";
+import React, { useState } from "react";
 
-function UploadResume({ handleSubmit, setResumeFile, loading }) {
+function UploadResume({ setAnalysis, setGeneratedResumeData, setView }) {
+  const [resumeFile, setResumeFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // ----------------------------------------------------------
+  // CONFIGURATION
+  // Base URL for the backend API, injected via Vite's env
+  // system. Falls back to localhost for local development.
+  // ----------------------------------------------------------
+  const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+  // ----------------------------------------------------------
+  // HANDLER: handleSubmit
+  // Triggered when the upload form is submitted on the
+  // Landing view. Responsibilities:
+  //  1. Guards against submission without a file.
+  //  2. Wraps the file in FormData for multipart upload.
+  //  3. POSTs to /api/analyze on the backend.
+  //  4. Stores analysis + generated HTML in state.
+  //  5. Switches the view to "dashboard" on success.
+  // Error is currently only logged — no UI error state shown.
+  // ----------------------------------------------------------
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!resumeFile) return alert("Upload a resume first");
+
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("resume", resumeFile);
+
+    try {
+      const res = await fetch(`${API_URL}/api/analyze`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        throw new Error("API request failed");
+      }
+      const data = await res.json();
+      console.log(data.improved_resume);
+
+      setAnalysis(data.analysis || data);
+      setGeneratedResumeData(data.improved_resume || "");
+      setView("dashboard");
+
+      // Reset form
+      setResumeFile(null);
+      e.target.reset();
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Please try again.");
+    }
+
+    setLoading(false);
+  };
+
   return (
     <>
       {/* ======================================================
