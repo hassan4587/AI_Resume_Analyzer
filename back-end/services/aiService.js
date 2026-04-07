@@ -86,7 +86,7 @@ ${resumeText}
 
     return JSON.parse(text);
   } catch (err) {
-    // 🔥 Handle specific OpenAI errors
+    // Handle specific OpenAI errors
     if (err.status === 401) {
       throw new Error("Invalid OpenAI API key");
     }
